@@ -24,9 +24,25 @@ jobs:
       - name: Install buildozer and cython
         run: |
           pip install --upgrade pip
-          pip install "cython>=3.0,<3.2.1" buildozer
+          pip install cython==0.29.33 buildozer
 
-      - name: Build APK
+      - name: First build pass (creates venv, expected to fail at pip self-upgrade)
+        run: |
+          yes | buildozer android debug || true
+
+      - name: Force clean pip reinstall inside the p4a venv
+        run: |
+          VENVDIR=$(find .buildozer -type d -path "*build/venv" 2>/dev/null | head -n 1)
+          echo "Found p4a venv at: $VENVDIR"
+          if [ -n "$VENVDIR" ]; then
+            "$VENVDIR/bin/python" -m pip install --force-reinstall --no-cache-dir "pip==24.0"
+            echo "pip reinstalled cleanly"
+            "$VENVDIR/bin/python" -m pip --version
+          else
+            echo "WARNING: p4a venv not found, skipping pip fix"
+          fi
+
+      - name: Second build pass (should now get past pip self-upgrade)
         run: |
           yes | buildozer android debug
 
