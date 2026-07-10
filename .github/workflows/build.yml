@@ -24,30 +24,9 @@ jobs:
       - name: Install buildozer and cython
         run: |
           pip install --upgrade pip
-          pip install cython==0.29.33 buildozer==1.5.0 python-for-android==2023.9.16
+          pip install "cython>=3.0,<3.2.1" buildozer
 
-      - name: First build pass (builds hostpython3, expected to fail at Kivy step)
-        run: |
-          yes | buildozer android debug || true
-
-      - name: Create cgi shim file
-        run: |
-          printf 'import html\ndef escape(s, quote=True):\n    return html.escape(s, quote=quote)\n' > /tmp/cgi_shim.py
-          cat /tmp/cgi_shim.py
-
-      - name: Inject cgi shim into hostpython3 stdlib
-        run: |
-          HOSTPYDIR=$(find .buildozer -type d -path "*hostpython3/native-build/root/usr/local/lib/python3.1*" 2>/dev/null | head -n 1)
-          echo "Found hostpython3 stdlib at: $HOSTPYDIR"
-          if [ -n "$HOSTPYDIR" ]; then
-            cp /tmp/cgi_shim.py "$HOSTPYDIR/cgi.py"
-            echo "cgi.py shim copied successfully"
-            ls -la "$HOSTPYDIR/cgi.py"
-          else
-            echo "WARNING: hostpython3 directory not found, shim not injected"
-          fi
-
-      - name: Second build pass (should now get past cgi import)
+      - name: Build APK
         run: |
           yes | buildozer android debug
 
