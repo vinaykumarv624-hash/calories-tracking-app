@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install system dependencies
         run: |
@@ -30,18 +30,19 @@ jobs:
         run: |
           yes | buildozer android debug || true
 
-      - name: Inject cgi module shim for Python 3.13+
+      - name: Create cgi shim file
         run: |
-          HOSTPYDIR=
-          echo "Found hostpython3 stdlib at: "
-          if [ -n "" ]; then
-            cat > "/cgi.py" << PYEOF
-import html
-def escape(s, quote=True):
-    return html.escape(s, quote=quote)
-PYEOF
-            echo "cgi.py shim created successfully"
-            ls -la "/cgi.py"
+          printf 'import html\ndef escape(s, quote=True):\n    return html.escape(s, quote=quote)\n' > /tmp/cgi_shim.py
+          cat /tmp/cgi_shim.py
+
+      - name: Inject cgi shim into hostpython3 stdlib
+        run: |
+          HOSTPYDIR=$(find .buildozer -type d -path "*hostpython3/native-build/root/usr/local/lib/python3.1*" 2>/dev/null | head -n 1)
+          echo "Found hostpython3 stdlib at: $HOSTPYDIR"
+          if [ -n "$HOSTPYDIR" ]; then
+            cp /tmp/cgi_shim.py "$HOSTPYDIR/cgi.py"
+            echo "cgi.py shim copied successfully"
+            ls -la "$HOSTPYDIR/cgi.py"
           else
             echo "WARNING: hostpython3 directory not found, shim not injected"
           fi
