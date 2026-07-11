@@ -35,7 +35,7 @@ jobs:
           VENVDIR=$(find .buildozer -type d -path "*build/venv" 2>/dev/null | head -n 1)
           echo "Found p4a venv at: $VENVDIR"
           if [ -n "$VENVDIR" ]; then
-            "$VENVDIR/bin/python" -m ensurepip --upgrade --force
+            "$VENVDIR/bin/python" -m ensurepip --upgrade
             echo "pip reinstalled cleanly via ensurepip"
             "$VENVDIR/bin/python" -m pip --version
           else
